@@ -91,6 +91,16 @@ export const generateClashConfig = (links) => {
     .map(link => parseProxyLink(link.trim()))
     .filter(Boolean);
 
+  // Handle duplicate names
+  const nameCount = {};
+  proxies.forEach(proxy => {
+    const originalName = proxy.name;
+    nameCount[originalName] = (nameCount[originalName] || 0) + 1;
+    if (nameCount[originalName] > 1) {
+      proxy.name = `${originalName}-${nameCount[originalName]}`;
+    }
+  });
+
   const proxyNames = proxies.map(p => p.name);
 
   const clashConfig = {
