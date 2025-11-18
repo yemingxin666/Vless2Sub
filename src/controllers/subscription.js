@@ -8,8 +8,10 @@
 import config from '../config/index.js';
 import { getAllOptimizedAddresses } from '../services/ipOptimizer.js';
 import { generateLinksFromAddresses } from '../services/linkGenerator.js';
+import { generateClashConfig } from '../services/clashGenerator.js';
 import { utf8ToBase64 } from '../utils/crypto.js';
 import { validateQueryParams } from '../utils/validator.js';
+import yaml from 'js-yaml';
 
 /**
  * Generate subscription
@@ -32,11 +34,9 @@ export const generateSubscription = async (req, res) => {
     const path = params.path || config.host.path;
     const sni = params.sni || host;
     const type = params.type || config.host.type;
-    if(host || host === 'null'){
-      host="127.0.0.1";
-    }
+
     // Validate required parameters
-    if ( !uuid || uuid === 'null') {
+    if (!host || host === 'null' || !uuid || uuid === 'null') {
       return res.status(400).send(`Missing required parameters: host and uuid
 
 ${url.origin}/sub?host=[your host]&uuid=[your uuid]&path=[your path]
@@ -85,22 +85,33 @@ ${url.origin}/sub?host=[your host]&uuid=[your uuid]&path=[your path]
     const format = url.searchParams.get('format')?.toLowerCase();
     const isSubConverterRequest = req.headers['subconverter-request'] || req.headers['subconverter-version'];
 
-    // Handle format conversion (Clash, Sing-box, etc.)
-    if (format && ['clash', 'singbox', 'surge'].includes(format)) {
+    // Handle Clash format
+    if (format === 'clash') {
+      const clashConfig = generateClashConfig(allLinks);
+      const yamlContent = yaml.dump(clashConfig, { lineWidth: -1 });
+
+      res.set({
+        'Content-Type': 'text/yaml; charset=utf-8',
+        'Profile-Update-Interval': `${config.subscription.updateTime}`,
+        'Profile-web-page-url': url.origin,
+      });
+
+      return res.send(yamlContent);
+    }
+
+    // Handle other formats (Sing-box, Surge)
+    if (format && ['singbox', 'surge'].includes(format)) {
       const subApi = config.subscription.api;
       const subConfig = config.subscription.config;
       const subProtocol = config.subscription.protocol;
       const scv = config.advanced.scv || 'false';
 
-      // Build the original subscription URL (without format parameter)
       const originalUrl = new URL(req.url, `http://${req.headers.host}`);
-      originalUrl.searchParams.delete('format'); // Remove format parameter
+      originalUrl.searchParams.delete('format');
       const subscriptionUrl = originalUrl.href;
 
-      // Build subscription converter URL
       const converterUrl = `${subProtocol}://${subApi}/sub?target=${format}&url=${encodeURIComponent(subscriptionUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=${scv}&fdn=false&sort=false&new_name=true`;
 
-      // Redirect to converter
       return res.redirect(converterUrl);
     }
 

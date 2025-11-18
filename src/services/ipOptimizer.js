@@ -118,7 +118,7 @@ export const processCSVResults = async (tlsMode) => {
   try {
     const promises = csv.map(async (csvUrl) => {
       try {
-        const response = await axios.get(csvUrl, { timeout: 5000 });
+        const response = await axios.get(csvUrl, { timeout: 15000 });
 
         if (response.status === 200) {
           const rows = parseCSV(response.data);
