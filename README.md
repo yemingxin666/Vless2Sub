@@ -37,15 +37,15 @@ PORT=3000
 # 访问令牌（用于保护订阅端点）
 TOKEN=auto
 
-# 你的域名
+# 你的域名(其实可以不用必填，看你填入的节点是否有包含host,没有包含host就是用配置文件的host)
 HOST=your-domain.com
 
-# VLESS/VMess UUID 或 Trojan 密码
+# VLESS/VMess UUID 或 Trojan 密码(其实可以不用必填，跟host同理)
 UUID=your-uuid-here
 # 或者使用 PASSWORD=your-password-here (Trojan)
 
-# WebSocket 路径
-PATH=/?ed=2560
+# WebSocket 路径(其实可以不用必填，跟host同理)
+PATH=your-path
 ```
 
 ### 3. 启动服务
